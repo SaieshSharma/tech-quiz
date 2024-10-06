@@ -1,10 +1,8 @@
-// src/pages/Quiz.jsx
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom'; 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import QuestionCard from '@/components/QuestionCard';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
 const Quiz = () => {
   const { category } = useParams(); // Extract category from URL
@@ -18,21 +16,15 @@ const Quiz = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-
-        const apiKey = import.meta.env.VITE_QUIZ_API_KEY
-
-
-        const response = await axios.get(
-          `https://quizapi.io/api/v1/questions`, 
-          {
-            params: {
-              apiKey: apiKey,
-              category: category,
-              limit: 10 // Fetch 10 questions for the selected category
-            }
-          }
-        );
-        setQuestions(response.data);
+        const response = await axios.get('https://opentdb.com/api.php', {
+          params: {
+            amount: 10,
+            category, // Ensure this is a valid category ID
+            difficulty: 'easy',
+            type: 'multiple',
+          },
+        });
+        setQuestions(response.data.results);
       } catch (err) {
         setError('Failed to fetch questions');
       } finally {
@@ -43,34 +35,20 @@ const Quiz = () => {
     fetchQuestions();
   }, [category]);
 
-  // Handle when user selects an answer for the current question
   const handleAnswerSelect = (answer) => {
     setSelectedAnswers((prev) => ({
       ...prev,
-      [currentQuestion]: answer // Save answer for the current question
+      [currentQuestion]: answer, // Save answer for the current question
     }));
   };
 
-  // Calculate the final score based on user's answers
   const calculateScore = () => {
     let totalScore = 0;
 
     questions.forEach((question, index) => {
-      const correctAnswers = question.correct_answers;
       const userAnswer = selectedAnswers[index];
-
-      // Check if the user's selected answer(s) match the correct answer(s)
-      if (userAnswer) {
-        let isCorrect = true;
-        for (const key in userAnswer) {
-          if (correctAnswers[key + '_correct'] !== 'true') {
-            isCorrect = false;
-            break;
-          }
-        }
-        if (isCorrect) {
-          totalScore += 1; // Increment score for each correct answer
-        }
+      if (userAnswer === question.correct_answer) {
+        totalScore += 1;
       }
     });
 
@@ -91,28 +69,32 @@ const Quiz = () => {
     }
   };
 
-  if (loading) return <p className='text-center mt-30 font-serif font-bold'>Loading questions..., Please wait</p>;
+  if (loading) return <p>Loading questions... Please wait</p>;
   if (error) return <p>{error}</p>;
 
   return (
     <div className="quiz-page">
-      <h1 className="text-3xl font-serif font-bold m-4 text-center">{`Quiz: ${category}`}</h1>
+      <h1 className="text-3xl font-serif font-bold m-4 text-center">{`Quiz`}</h1>
       {score === null ? (
         <>
           {questions.length > 0 && (
             <QuestionCard
-              question={questions[currentQuestion]}
-              selectedAnswer={selectedAnswers[currentQuestion]} // Pass selected answer for the current question
+              question={questions[currentQuestion] || {}} // Fallback to an empty object if undefined
+              selectedAnswer={selectedAnswers[currentQuestion]}
               onAnswerSelect={handleAnswerSelect}
             />
           )}
 
           <div className="navigation-button flex justify-start gap-10 ml-4 text-black">
-            <Button className="bg-sky-200" onClick={handlePrev} disabled={currentQuestion === 0}>
+            <Button
+              className="bg-sky-200"
+              onClick={handlePrev}
+              disabled={currentQuestion === 0}
+            >
               Previous
             </Button>
             <Button
-            className="bg-sky-200"
+              className="bg-sky-200"
               onClick={handleNext}
               disabled={currentQuestion === questions.length - 1 && score !== null}
             >
@@ -123,9 +105,11 @@ const Quiz = () => {
       ) : (
         <div className="score-section">
           <h1 className="text-4xl text-center font-serif">You have completed the Quiz</h1>
-          <h1 className="text-2xl text-center mt-10"> Here's Your Score</h1>
           <h2 className="text-2xl text-center mt-10">Your Score: {score} / {questions.length}</h2>
-          <Button className="mt-10 text-center" onClick={() => window.location.reload()}>Restart Quiz</Button>
+          <div className='text-center mt-10'>
+          <Button className="w-auto text-center" onClick={() => window.location.reload()}>Restart Quiz</Button>
+
+          </div>
         </div>
       )}
     </div>
