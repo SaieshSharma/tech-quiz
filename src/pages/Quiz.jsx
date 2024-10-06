@@ -16,29 +16,40 @@ const Quiz = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
+        const categoryId = parseInt(category, 10); // Convert category to integer
+        console.log(`Fetching questions for category: ${categoryId}`); // Log the category ID
+
         const response = await axios.get('https://opentdb.com/api.php', {
           params: {
             amount: 10,
-            category, // Ensure this is a valid category ID
+            category: categoryId,
             difficulty: 'easy',
             type: 'multiple',
           },
         });
-        setQuestions(response.data.results);
+
+        if (response.data.response_code === 0) {
+          setQuestions(response.data.results);
+        } else {
+          setError('No questions found for this category');
+        }
       } catch (err) {
         setError('Failed to fetch questions');
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchQuestions();
+    if (category) {
+      fetchQuestions(); // Fetch questions if category is present
+    }
   }, [category]);
 
   const handleAnswerSelect = (answer) => {
     setSelectedAnswers((prev) => ({
       ...prev,
-      [currentQuestion]: answer, // Save answer for the current question
+      [currentQuestion]: answer,
     }));
   };
 
@@ -107,8 +118,7 @@ const Quiz = () => {
           <h1 className="text-4xl text-center font-serif">You have completed the Quiz</h1>
           <h2 className="text-2xl text-center mt-10">Your Score: {score} / {questions.length}</h2>
           <div className='text-center mt-10'>
-          <Button className="w-auto text-center" onClick={() => window.location.reload()}>Restart Quiz</Button>
-
+            <Button className="w-auto text-center" onClick={() => window.location.reload()}>Restart Quiz</Button>
           </div>
         </div>
       )}

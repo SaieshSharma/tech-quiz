@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 // Utility function to decode HTML entities
 const decodeHtml = (html) => {
@@ -12,26 +12,40 @@ const shuffleArray = (array) => {
 };
 
 const QuestionCard = ({ question, selectedAnswer, onAnswerSelect }) => {
-  const { question: questionText, correct_answer, incorrect_answers } = question;
+  const { question: questionText, correct_answer, incorrect_answers } = question || {};
 
-  // Combine correct and incorrect answers
-  const combinedAnswers = [correct_answer, ...incorrect_answers];
-  
+  // Combine correct and incorrect answers using useMemo to avoid recalculating
+  const combinedAnswers = useMemo(() => {
+    return correct_answer && incorrect_answers ? [correct_answer, ...incorrect_answers] : [];
+  }, [correct_answer, incorrect_answers]);
+
   // Local state for shuffled answers
   const [shuffledAnswers, setShuffledAnswers] = useState([]);
 
+  // Effect to shuffle answers once when the question changes
   useEffect(() => {
-    // Shuffle only once when the component mounts
-    setShuffledAnswers(shuffleArray(combinedAnswers));
-  }, [question]);
+    if (combinedAnswers.length > 0) {
+      setShuffledAnswers(shuffleArray([...combinedAnswers]));
+    }
+  }, [combinedAnswers]);
 
   // Decode the question and answers
-  const decodedQuestionText = decodeHtml(questionText);
+  const decodedQuestionText = decodeHtml(questionText || ''); // Fallback to empty string if undefined
   const decodedAnswers = shuffledAnswers.map(answer => decodeHtml(answer));
 
   const handleAnswerChange = (answer) => {
     onAnswerSelect(answer); // Pass the selected answer back to the parent
   };
+
+  // Debugging logs
+  console.log('Question:', questionText);
+  console.log('Correct Answer:', correct_answer);
+  console.log('Incorrect Answers:', incorrect_answers);
+  console.log('Decoded Answers:', decodedAnswers);
+
+  if (!question) {
+    return <p>No question available</p>; // Fallback if question is undefined
+  }
 
   return (
     <div className="question-card bg-gray-100 p-4 mb-4 rounded">
