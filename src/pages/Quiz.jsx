@@ -18,11 +18,15 @@ const Quiz = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
+
+        const apiKey = import.meta.env.VITE_QUIZ_API_KEY
+
+
         const response = await axios.get(
           `https://quizapi.io/api/v1/questions`, 
           {
             params: {
-              apiKey: import.meta.env.VITE_QUIZ_API_KEY,
+              apiKey: apiKey,
               category: category,
               limit: 10 // Fetch 10 questions for the selected category
             }
